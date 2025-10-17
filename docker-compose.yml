@@ -1,3 +1,4 @@
+version: "3.8"
 services:
   mysqldb:
     image: mysql:8
@@ -11,18 +12,24 @@ services:
       - mysql_data:/var/lib/mysql
     networks:
       - springboot-mysql-net
-
+    command: --bind-address=0.0.0.0
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
   backend:
     image: harivenkatasaiduluk/docker-backend-105:latest
     container_name: springboot
     ports:
       - "2028:2058"
     depends_on:
-      - mysqldb
+      mysqldb:
+        condition: service_healthy
     restart: on-failure
     networks:
       - springboot-mysql-net
-
   frontend:
     image: harivenkatasaiduluk/docker-frontend-105:latest
     container_name: react
